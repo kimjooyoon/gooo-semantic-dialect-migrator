@@ -1,0 +1,30 @@
+gooo semantic_dialect_migrator v1
+authority metacode
+denominator id=semantic-dialect-migrator-v1 cases=8 unit=fixed-case
+authority_policy repository_writes=0 local_test_executions=0 cross_project_required_gates=0 automatic_commit=0 automatic_push=0 automatic_merge=0 automatic_release=0
+source_policy input_repository_writes=0 outputs=caller_owned_only overwrite_source=never
+precedence REFUTED>UNKNOWN>CLOSED
+unknown_fields stage,step,reason,unknown_class,next_operation,blocked_by
+dialects versions=v1|v2
+predicate ordinal=1 id=terminal_reason kind=terminal-reason preserve=true
+predicate ordinal=2 id=effect_trace kind=effect-trace preserve=true
+predicate ordinal=3 id=capability_set kind=capability-set preserve=true
+predicate ordinal=4 id=origin_map kind=origin-map preserve=true
+predicate ordinal=5 id=reversible_boundary kind=reversible-boundary preserve=true
+predicate ordinal=6 id=canonical_ir kind=canonical-ir preserve=true
+predicate ordinal=7 id=replay kind=replay preserve=true
+operation ordinal=1 id=NO_OP kind=NO_OP reversible=true lossy=false requires_origin=true requires_inverse=true preserves=terminal_reason|effect_trace|capability_set|origin_map|reversible_boundary|canonical_ir|replay
+operation ordinal=2 id=RENAME_SYMBOL kind=RENAME_SYMBOL reversible=true lossy=false requires_origin=true requires_inverse=true preserves=terminal_reason|effect_trace|capability_set|origin_map|reversible_boundary|replay
+operation ordinal=3 id=SPLIT_NODE kind=SPLIT_NODE reversible=true lossy=false requires_origin=true requires_inverse=true preserves=terminal_reason|effect_trace|capability_set|origin_map|reversible_boundary|replay
+operation ordinal=4 id=COMMENT_ONLY kind=COMMENT_ONLY reversible=true lossy=false requires_origin=true requires_inverse=true preserves=terminal_reason|effect_trace|capability_set|origin_map|reversible_boundary|canonical_ir|replay
+operation ordinal=5 id=CAPABILITY_MIGRATION kind=CAPABILITY_MIGRATION reversible=false lossy=true requires_origin=true requires_inverse=false preserves=terminal_reason|effect_trace|origin_map
+operation ordinal=6 id=CHANGE_TERMINAL_REASON kind=CHANGE_TERMINAL_REASON reversible=true lossy=false requires_origin=true requires_inverse=true preserves=effect_trace|capability_set|origin_map|reversible_boundary|replay
+operation ordinal=7 id=REPLAY kind=REPLAY reversible=true lossy=false requires_origin=true requires_inverse=true preserves=terminal_reason|effect_trace|capability_set|origin_map|reversible_boundary|replay
+case ordinal=1 id=no-op-canonical fixture=fixtures/cases/no-op-canonical.json expected=CLOSED
+case ordinal=2 id=symbol-rename-origin fixture=fixtures/cases/symbol-rename-origin.json expected=CLOSED
+case ordinal=3 id=one-to-many-split fixture=fixtures/cases/one-to-many-split.json expected=CLOSED
+case ordinal=4 id=comment-only fixture=fixtures/cases/comment-only.json expected=CLOSED
+case ordinal=5 id=missing-inverse-origin fixture=fixtures/cases/missing-inverse-origin.json expected=UNKNOWN
+case ordinal=6 id=lossy-capability fixture=fixtures/cases/lossy-capability.json expected=UNKNOWN
+case ordinal=7 id=semantic-incompatibility fixture=fixtures/cases/semantic-incompatibility.json expected=REFUTED
+case ordinal=8 id=replay-closed fixture=fixtures/cases/replay-closed.json expected=CLOSED

@@ -1,0 +1,26 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/denominator/v1",
+  "authority": ".gooo/migrator.gooo",
+  "denominator_id": "semantic-dialect-migrator-v1",
+  "cases": 8,
+  "unit": "fixed-case",
+  "decision_precedence": ["REFUTED", "UNKNOWN", "CLOSED"],
+  "unknown_fields": ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"],
+  "case_vector": [
+    {"ordinal": 1, "id": "no-op-canonical", "expected": "CLOSED"},
+    {"ordinal": 2, "id": "symbol-rename-origin", "expected": "CLOSED"},
+    {"ordinal": 3, "id": "one-to-many-split", "expected": "CLOSED"},
+    {"ordinal": 4, "id": "comment-only", "expected": "CLOSED"},
+    {"ordinal": 5, "id": "missing-inverse-origin", "expected": "UNKNOWN"},
+    {"ordinal": 6, "id": "lossy-capability", "expected": "UNKNOWN"},
+    {"ordinal": 7, "id": "semantic-incompatibility", "expected": "REFUTED"},
+    {"ordinal": 8, "id": "replay-closed", "expected": "CLOSED"}
+  ],
+  "authority_policy": {
+    "input_repository_writes": 0,
+    "automatic_commit": 0,
+    "automatic_push": 0,
+    "automatic_merge": 0,
+    "automatic_release": 0
+  }
+}

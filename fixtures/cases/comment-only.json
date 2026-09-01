@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/case/v1",
+  "case_id": "comment-only",
+  "source_path": "examples/v1/main.gooo",
+  "source_dialect": "v1",
+  "target_dialect": "v2",
+  "expected_decision": "CLOSED",
+  "operations": [
+    {
+      "id": "op-comment",
+      "kind": "COMMENT_ONLY",
+      "comment": "v2 migration note: no semantic change",
+      "inverse": true,
+      "origins": [
+        {"from": "commit", "to": ["commit"]},
+        {"from": "load", "to": ["load"]}
+      ]
+    }
+  ],
+  "replay": [
+    {"input_id": "happy-path", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "write"]}
+  ]
+}

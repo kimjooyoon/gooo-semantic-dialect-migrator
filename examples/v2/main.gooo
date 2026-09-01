@@ -1,0 +1,7 @@
+# Canonical v2 spelling of the example program.
+gooo program v1
+program id=checkout dialect=v2 entry=load
+node id=load symbol=load capabilities=storage.read effects=read
+node id=commit symbol=commit capabilities=storage.write effects=write
+edge from=load to=commit
+terminal reason=committed

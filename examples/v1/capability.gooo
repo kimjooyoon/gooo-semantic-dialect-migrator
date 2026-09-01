@@ -1,0 +1,6 @@
+gooo program v1
+program id=capability-checkout dialect=v1 entry=load
+node id=load symbol=load capabilities=storage.read effects=read
+node id=commit symbol=commit capabilities=storage.write effects=write
+edge from=load to=commit
+terminal reason=committed

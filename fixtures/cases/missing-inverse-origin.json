@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/case/v1",
+  "case_id": "missing-inverse-origin",
+  "source_path": "examples/v1/main.gooo",
+  "source_dialect": "v1",
+  "target_dialect": "v2",
+  "expected_decision": "UNKNOWN",
+  "operations": [
+    {
+      "id": "op-incomplete-rename",
+      "kind": "RENAME_SYMBOL",
+      "from": "load",
+      "to": "fetch"
+    }
+  ],
+  "replay": [
+    {"input_id": "happy-path", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "write"]}
+  ]
+}

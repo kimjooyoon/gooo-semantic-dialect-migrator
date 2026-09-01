@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.x'
+      - name: Format check
+        run: test -z "$(gofmt -l .)"
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./... -count=1
+      - name: Vet
+        run: go vet ./...
+      - name: Semantic audit
+        run: scripts/semantic-audit.sh
+      - name: Immutable release guard contract
+        run: scripts/verify-immutable-release.sh --contract
+      - name: Generated artifact integration
+        run: |
+          out="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-integration-${GITHUB_RUN_ID}"
+          scripts/integration.sh "$out"
+          test -z "$(gofmt -l "$out/symbol-rename-origin/source.gooo.go" "$out/symbol-rename-origin/target.gooo.go")"
+      - name: Fixed conformance and audit metrics
+        run: |
+          out="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-conformance-${GITHUB_RUN_ID}"
+          scripts/conformance.sh "$out"
+          test -s "$out/conformance-index.json"
+          test -s "$out/metrics.json"
+          test -s "$out/ci-summary.md"
+      - name: Repository remains unchanged
+        run: git diff --exit-code
+      - name: Upload conformance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gooo-semantic-dialect-migrator-conformance
+          path: ${{ runner.temp }}/gooo-semantic-dialect-migrator-conformance-${{ github.run_id }}/
