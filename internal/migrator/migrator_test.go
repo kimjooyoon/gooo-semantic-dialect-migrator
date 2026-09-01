@@ -77,7 +77,7 @@ func TestRunnerObservationsRejectNullAndString(t *testing.T) {
 	for _, field := range runnerMetricFields {
 		values[field] = 1
 	}
-	values["local_test_executions"] = 0
+	values["local_test_executions"] = 1
 	values["local_build_executions"] = 0
 	values["local_vet_executions"] = 0
 	values["local_conformance_executions"] = 0
@@ -89,6 +89,7 @@ func TestRunnerObservationsRejectNullAndString(t *testing.T) {
 	if _, err := ParseRunnerObservations(raw); err == nil {
 		t.Fatal("non-zero local authority fields must be rejected")
 	}
+	values["local_test_executions"] = 0
 	values["compile_wall_ms"] = nil
 	values["build_wall_ms"] = 0
 	values["test_wall_ms"] = 0
