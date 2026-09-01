@@ -1,0 +1,29 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/case/v1",
+  "case_id": "one-to-many-split",
+  "source_path": "examples/v1/split.gooo",
+  "source_dialect": "v1",
+  "target_dialect": "v2",
+  "expected_decision": "CLOSED",
+  "operations": [
+    {
+      "id": "op-split-process",
+      "kind": "SPLIT_NODE",
+      "from": "process",
+      "into": ["validate", "store"],
+      "inverse": true,
+      "origins": [
+        {"from": "commit", "to": ["commit"]},
+        {"from": "load", "to": ["load"]},
+        {"from": "process", "to": ["store", "validate"]}
+      ],
+      "parts": [
+        {"id": "validate", "symbol": "validate", "capabilities": ["compute"], "effects": []},
+        {"id": "store", "symbol": "store", "capabilities": ["compute"], "effects": ["transform"]}
+      ]
+    }
+  ],
+  "replay": [
+    {"input_id": "happy-path", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "transform", "write"]}
+  ]
+}

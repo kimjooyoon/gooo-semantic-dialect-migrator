@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/case/v1",
+  "case_id": "lossy-capability",
+  "source_path": "examples/v1/capability.gooo",
+  "source_dialect": "v1",
+  "target_dialect": "v2",
+  "expected_decision": "UNKNOWN",
+  "operations": [
+    {
+      "id": "op-lossy-capability",
+      "kind": "CAPABILITY_MIGRATION",
+      "from": "load",
+      "from_capability": "storage.read",
+      "to_capability": "storage.metadata",
+      "lossy": true,
+      "origins": [
+        {"from": "commit", "to": ["commit"]},
+        {"from": "load", "to": ["load"]}
+      ]
+    }
+  ],
+  "replay": [
+    {"input_id": "happy-path", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "write"]}
+  ]
+}

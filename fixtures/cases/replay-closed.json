@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/semantic-dialect-migrator/case/v1",
+  "case_id": "replay-closed",
+  "source_path": "examples/v1/main.gooo",
+  "source_dialect": "v1",
+  "target_dialect": "v2",
+  "expected_decision": "CLOSED",
+  "operations": [
+    {
+      "id": "op-replay",
+      "kind": "REPLAY",
+      "inverse": true,
+      "origins": [
+        {"from": "commit", "to": ["commit"]},
+        {"from": "load", "to": ["load"]}
+      ]
+    }
+  ],
+  "replay": [
+    {"input_id": "replay-1", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "write"]},
+    {"input_id": "replay-2", "expected_terminal_reason": "committed", "expected_effect_trace": ["read", "write"]}
+  ]
+}
