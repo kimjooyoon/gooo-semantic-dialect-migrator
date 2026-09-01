@@ -26,7 +26,7 @@ func ApplyMigration(meta MetaContract, source Program, item MigrationCase) (Migr
 	if _, ok := findString(meta.Dialects, item.TargetDialect); !ok {
 		return MigrationResult{}, fmt.Errorf("target dialect %s is not declared by meta source", item.TargetDialect)
 	}
-	result := MigrationResult{Program: source, OriginMap: []OriginPair{}, Unknowns: []UnknownRecord{}, Reversible: true}
+	result := MigrationResult{Program: cloneProgram(source), OriginMap: []OriginPair{}, Unknowns: []UnknownRecord{}, Reversible: true}
 	for index, operation := range item.Operations {
 		declaration, ok := meta.Operation(operation.Kind)
 		if !ok {
@@ -255,4 +255,16 @@ func findString(values []string, wanted string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func cloneProgram(source Program) Program {
+	result := source
+	result.Nodes = make([]Node, len(source.Nodes))
+	for index, node := range source.Nodes {
+		result.Nodes[index] = node
+		result.Nodes[index].Capabilities = append([]string(nil), node.Capabilities...)
+		result.Nodes[index].Effects = append([]string(nil), node.Effects...)
+	}
+	result.Edges = append([]Edge(nil), source.Edges...)
+	return result
 }
