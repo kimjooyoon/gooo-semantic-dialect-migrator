@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
           IMMUTABLE_RELEASE_REPO: ${{ github.repository }}
-        run: gh api --method PUT -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases" -f enabled=true
+        run: gh api --method PUT -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases"
       - name: Verify repository immutable releases setting
         env:
           GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
