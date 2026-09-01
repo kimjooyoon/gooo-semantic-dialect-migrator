@@ -1,24 +1,20 @@
 name: Immutable release
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: Existing annotated tag to release
-        required: true
-        type: string
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
   release:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.x'
@@ -34,32 +30,32 @@ jobs:
         run: |
           out="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-release-${GITHUB_RUN_ID}"
           scripts/conformance.sh "$out"
-      - name: Enable repository immutable releases setting
+      - name: Check repository immutable releases setting
         env:
-          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.token }}
           IMMUTABLE_RELEASE_REPO: ${{ github.repository }}
-        run: gh api --method PUT -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases"
+        run: gh api -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' "repos/${GITHUB_REPOSITORY}/immutable-releases"
       - name: Verify repository immutable releases setting
         env:
-          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.token }}
           IMMUTABLE_RELEASE_REPO: ${{ github.repository }}
         run: scripts/verify-immutable-release.sh --setting
       - name: Build source asset and digest
         run: |
-          asset="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-${{ inputs.tag }}.tar.gz"
-          git archive --format=tar.gz --prefix="gooo-semantic-dialect-migrator-${{ inputs.tag }}/" "${{ inputs.tag }}" > "$asset"
+          asset="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-${GITHUB_REF_NAME}.tar.gz"
+          git archive --format=tar.gz --prefix="gooo-semantic-dialect-migrator-${GITHUB_REF_NAME}/" "$GITHUB_REF_NAME" > "$asset"
           sha256sum "$asset" > "$asset.sha256"
           echo "RELEASE_ASSET=$asset" >> "$GITHUB_ENV"
           echo "RELEASE_ASSET_SHA=$asset.sha256" >> "$GITHUB_ENV"
       - name: Create immutable GitHub release
         env:
-          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
-        run: gh release create "${{ inputs.tag }}" "$RELEASE_ASSET" "$RELEASE_ASSET_SHA" --verify-tag --title "${{ inputs.tag }}" --generate-notes
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$RELEASE_ASSET" "$RELEASE_ASSET_SHA" --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
       - name: Verify release immutable API state
         env:
-          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASE_TOKEN || github.token }}
+          GH_TOKEN: ${{ github.token }}
           IMMUTABLE_RELEASE_REPO: ${{ github.repository }}
-        run: scripts/verify-immutable-release.sh --release "${{ inputs.tag }}"
+        run: scripts/verify-immutable-release.sh --release "$GITHUB_REF_NAME"
       - name: Upload release evidence
         uses: actions/upload-artifact@v4
         with:
