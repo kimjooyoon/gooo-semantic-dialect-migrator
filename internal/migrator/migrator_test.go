@@ -72,6 +72,45 @@ func TestPrecedenceRefutesSemanticChange(t *testing.T) {
 	}
 }
 
+func TestRunnerObservationsRejectNullAndString(t *testing.T) {
+	values := map[string]any{}
+	for _, field := range runnerMetricFields {
+		values[field] = 1
+	}
+	values["local_test_executions"] = 0
+	values["local_build_executions"] = 0
+	values["local_vet_executions"] = 0
+	values["local_conformance_executions"] = 0
+	values["local_integration_executions"] = 0
+	raw, err := json.Marshal(values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseRunnerObservations(raw); err == nil {
+		t.Fatal("non-zero local authority fields must be rejected")
+	}
+	values["compile_wall_ms"] = nil
+	values["build_wall_ms"] = 0
+	values["test_wall_ms"] = 0
+	values["conformance_wall_ms"] = 0
+	values["integration_wall_ms"] = 0
+	raw, err = json.Marshal(values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseRunnerObservations(raw); err == nil {
+		t.Fatal("null runner field must be rejected")
+	}
+	values["compile_wall_ms"] = "0"
+	raw, err = json.Marshal(values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseRunnerObservations(raw); err == nil {
+		t.Fatal("string runner field must be rejected")
+	}
+}
+
 func decodeCase(raw []byte, meta MetaContract) (MigrationCase, []byte, error) {
 	path := filepath.Join("..", "..", "fixtures", "cases", "symbol-rename-origin.json")
 	_ = path

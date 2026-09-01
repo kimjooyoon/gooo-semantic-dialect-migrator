@@ -18,18 +18,21 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.x'
-      - name: Build
-        run: go build ./...
-      - name: Test
-        run: go test ./... -count=1
-      - name: Vet
-        run: go vet ./...
       - name: Semantic audit
         run: scripts/semantic-audit.sh
-      - name: Fixed conformance
+      - name: Immutable release guard contract
+        run: scripts/verify-immutable-release.sh --contract
+      - name: Measured compile build test conformance integration
         run: |
           out="${RUNNER_TEMP}/gooo-semantic-dialect-migrator-release-${GITHUB_RUN_ID}"
-          scripts/conformance.sh "$out"
+          scripts/ci-metrics.sh "$out"
+          test -s "$out/conformance/conformance-index.json"
+          test -s "$out/conformance/metrics.json"
+          test -s "$out/runner-measurements/runner-observations.json"
+      - name: Vet
+        run: go vet ./...
+      - name: Repository remains unchanged
+        run: git diff --exit-code
       - name: Check repository immutable releases setting
         env:
           GH_TOKEN: ${{ github.token }}

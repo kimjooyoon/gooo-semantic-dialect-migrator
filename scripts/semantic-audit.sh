@@ -14,7 +14,7 @@ grep -q '^unknown_fields stage,step,reason,unknown_class,next_operation,blocked_
 grep -q '^source_policy input_repository_writes=0 outputs=caller_owned_only overwrite_source=never$' "$meta"
 grep -q 'README.md' "$repo_root/README.md"
 
-if rg -nE 'git (commit|merge|push|reset|checkout)|gh (pr merge|release delete)' "$repo_root/scripts" "$repo_root/cmd"; then
+if grep -nE 'git (commit|merge|push|reset|checkout)|gh (pr merge|release delete)' "$repo_root/scripts"/*.sh "$repo_root/cmd"/*/*.go; then
   echo 'automatic source mutation or destructive repository integration is forbidden' >&2
   exit 1
 fi

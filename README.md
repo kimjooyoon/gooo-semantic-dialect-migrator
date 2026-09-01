@@ -66,6 +66,23 @@ regular files, generated files/bytes, per-stage `wall_ms` and
 `peak_rss_kib`, and test total/selected/executed/reused/failed/unknown. No
 score, weighted average, estimate, or percentage is emitted.
 
+CI additionally records independent runner-observed integer fields:
+`compile_wall_ms`, `compile_peak_rss_kib`, `build_wall_ms`,
+`build_peak_rss_kib`, `test_wall_ms`, `test_peak_rss_kib`,
+`conformance_wall_ms`, `conformance_peak_rss_kib`, `integration_wall_ms`,
+and `integration_peak_rss_kib`. The five local authority fields
+`local_test_executions`, `local_build_executions`, `local_vet_executions`,
+`local_conformance_executions`, and `local_integration_executions` are
+exactly zero. Missing, null, string, negative, or extra runner fields fail
+closed. The CI runner obtains command wall time and maximum RSS from
+`/usr/bin/time` and annotates the already-generated conformance artifact.
+The annotation verifies that the conformance replay digest is unchanged.
+
+The CI measurement wrapper is [`scripts/ci-metrics.sh`](scripts/ci-metrics.sh).
+It measures the compile artifact generation, Go build, Go test, conformance,
+and integration commands independently with `/usr/bin/time`, then validates
+the final artifact schema before upload.
+
 Local test/build/vet/conformance execution is intentionally outside this
 repository's release protocol. GitHub Actions is the validation authority.
 The workflows do not commit, push, merge, release, or mutate an input source.

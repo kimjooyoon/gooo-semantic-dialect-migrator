@@ -6,6 +6,13 @@
   "unit": "fixed-case",
   "decision_precedence": ["REFUTED", "UNKNOWN", "CLOSED"],
   "unknown_fields": ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"],
+  "runner_metric_fields": [
+    "compile_wall_ms", "compile_peak_rss_kib", "build_wall_ms", "build_peak_rss_kib",
+    "test_wall_ms", "test_peak_rss_kib", "conformance_wall_ms", "conformance_peak_rss_kib",
+    "integration_wall_ms", "integration_peak_rss_kib", "local_test_executions",
+    "local_build_executions", "local_vet_executions", "local_conformance_executions",
+    "local_integration_executions"
+  ],
   "case_vector": [
     {"ordinal": 1, "id": "no-op-canonical", "expected": "CLOSED"},
     {"ordinal": 2, "id": "symbol-rename-origin", "expected": "CLOSED"},
@@ -18,6 +25,11 @@
   ],
   "authority_policy": {
     "input_repository_writes": 0,
+    "local_test_executions": 0,
+    "local_build_executions": 0,
+    "local_vet_executions": 0,
+    "local_conformance_executions": 0,
+    "local_integration_executions": 0,
     "automatic_commit": 0,
     "automatic_push": 0,
     "automatic_merge": 0,
