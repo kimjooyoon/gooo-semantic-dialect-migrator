@@ -36,3 +36,17 @@ remain UNKNOWN until a future operation supplies the missing proof.
 The CLI refuses an output directory inside the input root. It does not write
 to source files, git state, remotes, pull requests, tags, or releases. CI
 uses temporary caller-owned output and publishes it as an artifact for audit.
+
+## Runner metrics
+
+The CI artifact schema has independent integer pairs for `compile`, `build`,
+`test`, `conformance`, and `integration`: each pair is `wall_ms` and
+`peak_rss_kib`. The CI wrapper obtains these values from `/usr/bin/time`; it
+does not reuse the internal Go stage clock for command metrics. Five authority
+fields record local execution counts for test, build, vet, conformance, and
+integration, and the meta source fixes each to zero.
+
+`annotate-metrics` accepts exactly the declared runner fields. Missing, null,
+string, fractional, negative, or extra fields are rejected. It rewrites only
+the caller-owned conformance index and metrics files and verifies that the
+case-level replay digest is identical before and after annotation.

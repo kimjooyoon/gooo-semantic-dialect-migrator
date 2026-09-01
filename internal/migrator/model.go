@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -224,6 +225,7 @@ type ConformanceCase struct {
 	Expected        string              `json:"expected"`
 	Observed        string              `json:"observed"`
 	Pass            bool                `json:"pass"`
+	ReplayDigest    string              `json:"replay_digest"`
 	PredicateVector []PredicateEvidence `json:"predicate_vector"`
 	Unknowns        []UnknownRecord     `json:"unknowns"`
 }
@@ -247,19 +249,34 @@ type TestMetrics struct {
 }
 
 type Metrics struct {
-	Schema           string        `json:"schema"`
-	Cases            int           `json:"cases"`
-	Closed           int           `json:"closed"`
-	Unknown          int           `json:"unknown"`
-	Refuted          int           `json:"refuted"`
-	SourceFiles      int           `json:"source_files"`
-	IRFiles          int           `json:"ir_files"`
-	GeneratedFiles   int           `json:"generated_files"`
-	GeneratedBytes   int           `json:"generated_bytes"`
-	Inventory        Inventory     `json:"inventory"`
-	Tests            TestMetrics   `json:"tests"`
-	StageMetrics     []StageMetric `json:"stage_metrics"`
-	RepositoryWrites int           `json:"repository_writes"`
+	Schema                     string        `json:"schema"`
+	Cases                      int           `json:"cases"`
+	Closed                     int           `json:"closed"`
+	Unknown                    int           `json:"unknown"`
+	Refuted                    int           `json:"refuted"`
+	SourceFiles                int           `json:"source_files"`
+	IRFiles                    int           `json:"ir_files"`
+	GeneratedFiles             int           `json:"generated_files"`
+	GeneratedBytes             int           `json:"generated_bytes"`
+	Inventory                  Inventory     `json:"inventory"`
+	Tests                      TestMetrics   `json:"tests"`
+	StageMetrics               []StageMetric `json:"stage_metrics"`
+	RepositoryWrites           int           `json:"repository_writes"`
+	CompileWallMS              int           `json:"compile_wall_ms"`
+	CompilePeakRSSKiB          int           `json:"compile_peak_rss_kib"`
+	BuildWallMS                int           `json:"build_wall_ms"`
+	BuildPeakRSSKiB            int           `json:"build_peak_rss_kib"`
+	TestWallMS                 int           `json:"test_wall_ms"`
+	TestPeakRSSKiB             int           `json:"test_peak_rss_kib"`
+	ConformanceWallMS          int           `json:"conformance_wall_ms"`
+	ConformancePeakRSSKiB      int           `json:"conformance_peak_rss_kib"`
+	IntegrationWallMS          int           `json:"integration_wall_ms"`
+	IntegrationPeakRSSKiB      int           `json:"integration_peak_rss_kib"`
+	LocalTestExecutions        int           `json:"local_test_executions"`
+	LocalBuildExecutions       int           `json:"local_build_executions"`
+	LocalVetExecutions         int           `json:"local_vet_executions"`
+	LocalConformanceExecutions int           `json:"local_conformance_executions"`
+	LocalIntegrationExecutions int           `json:"local_integration_executions"`
 }
 
 type ConformanceReport struct {
@@ -269,7 +286,138 @@ type ConformanceReport struct {
 	ExpectedPrecedence []string          `json:"expected_precedence"`
 	Cases              []ConformanceCase `json:"cases"`
 	FixedCaseVector    []string          `json:"fixed_case_vector"`
+	ReplayDigest       string            `json:"replay_digest"`
 	Metrics            Metrics           `json:"metrics"`
+}
+
+type RunnerObservations struct {
+	CompileWallMS              int `json:"compile_wall_ms"`
+	CompilePeakRSSKiB          int `json:"compile_peak_rss_kib"`
+	BuildWallMS                int `json:"build_wall_ms"`
+	BuildPeakRSSKiB            int `json:"build_peak_rss_kib"`
+	TestWallMS                 int `json:"test_wall_ms"`
+	TestPeakRSSKiB             int `json:"test_peak_rss_kib"`
+	ConformanceWallMS          int `json:"conformance_wall_ms"`
+	ConformancePeakRSSKiB      int `json:"conformance_peak_rss_kib"`
+	IntegrationWallMS          int `json:"integration_wall_ms"`
+	IntegrationPeakRSSKiB      int `json:"integration_peak_rss_kib"`
+	LocalTestExecutions        int `json:"local_test_executions"`
+	LocalBuildExecutions       int `json:"local_build_executions"`
+	LocalVetExecutions         int `json:"local_vet_executions"`
+	LocalConformanceExecutions int `json:"local_conformance_executions"`
+	LocalIntegrationExecutions int `json:"local_integration_executions"`
+}
+
+var runnerMetricFields = []string{
+	"compile_wall_ms", "compile_peak_rss_kib", "build_wall_ms", "build_peak_rss_kib",
+	"test_wall_ms", "test_peak_rss_kib", "conformance_wall_ms", "conformance_peak_rss_kib",
+	"integration_wall_ms", "integration_peak_rss_kib", "local_test_executions", "local_build_executions",
+	"local_vet_executions", "local_conformance_executions", "local_integration_executions",
+}
+
+func ParseRunnerObservations(raw []byte) (RunnerObservations, error) {
+	var fields map[string]json.RawMessage
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if err := decoder.Decode(&fields); err != nil {
+		return RunnerObservations{}, fmt.Errorf("runner observations must be a JSON object: %w", err)
+	}
+	if len(fields) != len(runnerMetricFields) {
+		return RunnerObservations{}, errors.New("runner observations must contain exactly the declared metric fields")
+	}
+	for _, field := range runnerMetricFields {
+		if _, ok := fields[field]; !ok {
+			return RunnerObservations{}, fmt.Errorf("runner observation field %s is missing", field)
+		}
+	}
+	if err := validateExactRunnerFields(fields); err != nil {
+		return RunnerObservations{}, err
+	}
+	var result RunnerObservations
+	if err := json.Unmarshal(raw, &result); err != nil {
+		return RunnerObservations{}, fmt.Errorf("runner observations contain a non-integer or null field: %w", err)
+	}
+	values := []int{
+		result.CompileWallMS, result.CompilePeakRSSKiB, result.BuildWallMS, result.BuildPeakRSSKiB,
+		result.TestWallMS, result.TestPeakRSSKiB, result.ConformanceWallMS, result.ConformancePeakRSSKiB,
+		result.IntegrationWallMS, result.IntegrationPeakRSSKiB, result.LocalTestExecutions, result.LocalBuildExecutions,
+		result.LocalVetExecutions, result.LocalConformanceExecutions, result.LocalIntegrationExecutions,
+	}
+	for index, value := range values {
+		if value < 0 {
+			return RunnerObservations{}, fmt.Errorf("runner observation %s is negative", runnerMetricFields[index])
+		}
+	}
+	for _, field := range []int{result.LocalTestExecutions, result.LocalBuildExecutions, result.LocalVetExecutions, result.LocalConformanceExecutions, result.LocalIntegrationExecutions} {
+		if field != 0 {
+			return RunnerObservations{}, errors.New("local execution authority fields must be exactly zero")
+		}
+	}
+	return result, nil
+}
+
+func (m *Metrics) ApplyRunnerObservations(observations RunnerObservations) {
+	m.CompileWallMS, m.CompilePeakRSSKiB = observations.CompileWallMS, observations.CompilePeakRSSKiB
+	m.BuildWallMS, m.BuildPeakRSSKiB = observations.BuildWallMS, observations.BuildPeakRSSKiB
+	m.TestWallMS, m.TestPeakRSSKiB = observations.TestWallMS, observations.TestPeakRSSKiB
+	m.ConformanceWallMS, m.ConformancePeakRSSKiB = observations.ConformanceWallMS, observations.ConformancePeakRSSKiB
+	m.IntegrationWallMS, m.IntegrationPeakRSSKiB = observations.IntegrationWallMS, observations.IntegrationPeakRSSKiB
+	m.LocalTestExecutions, m.LocalBuildExecutions = observations.LocalTestExecutions, observations.LocalBuildExecutions
+	m.LocalVetExecutions, m.LocalConformanceExecutions = observations.LocalVetExecutions, observations.LocalConformanceExecutions
+	m.LocalIntegrationExecutions = observations.LocalIntegrationExecutions
+}
+
+func ParseMetrics(raw []byte) (Metrics, error) {
+	var fields map[string]json.RawMessage
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if err := decoder.Decode(&fields); err != nil {
+		return Metrics{}, fmt.Errorf("metrics must be a JSON object: %w", err)
+	}
+	for _, field := range runnerMetricFields {
+		if _, ok := fields[field]; !ok {
+			return Metrics{}, fmt.Errorf("metrics field %s is missing", field)
+		}
+	}
+	if err := validateExactRunnerFields(fields); err != nil {
+		return Metrics{}, err
+	}
+	var metrics Metrics
+	decoder = json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&metrics); err != nil {
+		return Metrics{}, fmt.Errorf("metrics contain a non-integer, null, or unknown field: %w", err)
+	}
+	observationsRaw, _ := json.Marshal(metricsRunnerFields(metrics))
+	if _, err := ParseRunnerObservations(observationsRaw); err != nil {
+		return Metrics{}, err
+	}
+	return metrics, nil
+}
+
+func validateExactRunnerFields(fields map[string]json.RawMessage) error {
+	for _, field := range runnerMetricFields {
+		raw := bytes.TrimSpace(fields[field])
+		if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+			return fmt.Errorf("metrics field %s is missing or null", field)
+		}
+		var value int64
+		if err := json.Unmarshal(raw, &value); err != nil {
+			return fmt.Errorf("metrics field %s must be an exact integer: %w", field, err)
+		}
+	}
+	return nil
+}
+
+func metricsRunnerFields(metrics Metrics) map[string]int {
+	return map[string]int{
+		"compile_wall_ms": metrics.CompileWallMS, "compile_peak_rss_kib": metrics.CompilePeakRSSKiB,
+		"build_wall_ms": metrics.BuildWallMS, "build_peak_rss_kib": metrics.BuildPeakRSSKiB,
+		"test_wall_ms": metrics.TestWallMS, "test_peak_rss_kib": metrics.TestPeakRSSKiB,
+		"conformance_wall_ms": metrics.ConformanceWallMS, "conformance_peak_rss_kib": metrics.ConformancePeakRSSKiB,
+		"integration_wall_ms": metrics.IntegrationWallMS, "integration_peak_rss_kib": metrics.IntegrationPeakRSSKiB,
+		"local_test_executions": metrics.LocalTestExecutions, "local_build_executions": metrics.LocalBuildExecutions,
+		"local_vet_executions": metrics.LocalVetExecutions, "local_conformance_executions": metrics.LocalConformanceExecutions,
+		"local_integration_executions": metrics.LocalIntegrationExecutions,
+	}
 }
 
 type Execution struct {

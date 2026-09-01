@@ -1,7 +1,7 @@
 gooo semantic_dialect_migrator v1
 authority metacode
 denominator id=semantic-dialect-migrator-v1 cases=8 unit=fixed-case
-authority_policy repository_writes=0 local_test_executions=0 cross_project_required_gates=0 automatic_commit=0 automatic_push=0 automatic_merge=0 automatic_release=0
+authority_policy repository_writes=0 local_test_executions=0 local_build_executions=0 local_vet_executions=0 local_conformance_executions=0 local_integration_executions=0 cross_project_required_gates=0 automatic_commit=0 automatic_push=0 automatic_merge=0 automatic_release=0
 source_policy input_repository_writes=0 outputs=caller_owned_only overwrite_source=never
 precedence REFUTED>UNKNOWN>CLOSED
 unknown_fields stage,step,reason,unknown_class,next_operation,blocked_by

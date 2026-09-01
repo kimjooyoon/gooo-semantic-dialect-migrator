@@ -20,10 +20,48 @@ func main() {
 		runMigrate(os.Args[2:])
 	case "conformance":
 		runConformance(os.Args[2:])
+	case "annotate-metrics":
+		runAnnotateMetrics(os.Args[2:])
+	case "validate-metrics":
+		runValidateMetrics(os.Args[2:])
 	default:
 		usage()
 		os.Exit(2)
 	}
+}
+
+func runAnnotateMetrics(args []string) {
+	flags := flag.NewFlagSet("annotate-metrics", flag.ExitOnError)
+	indexPath := flags.String("index", "", "conformance-index.json to annotate")
+	observationsPath := flags.String("observations", "", "strict runner observation JSON")
+	flags.Parse(args)
+	if *indexPath == "" || *observationsPath == "" {
+		fmt.Fprintln(os.Stderr, "annotate-metrics requires -index and -observations")
+		os.Exit(2)
+	}
+	report, err := migrator.AnnotateMetrics(*indexPath, *observationsPath)
+	if err != nil {
+		fatal(err)
+	}
+	printJSON(report)
+}
+
+func runValidateMetrics(args []string) {
+	flags := flag.NewFlagSet("validate-metrics", flag.ExitOnError)
+	metricsPath := flags.String("metrics", "", "metrics.json to validate")
+	flags.Parse(args)
+	if *metricsPath == "" {
+		fmt.Fprintln(os.Stderr, "validate-metrics requires -metrics")
+		os.Exit(2)
+	}
+	raw, err := os.ReadFile(*metricsPath)
+	if err != nil {
+		fatal(err)
+	}
+	if _, err := migrator.ParseMetrics(raw); err != nil {
+		fatal(err)
+	}
+	fmt.Println("metrics_validation=CLOSED")
 }
 
 func runMigrate(args []string) {
@@ -93,5 +131,5 @@ func fatal(err error) {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: gooo-semantic-dialect-migrator migrate|conformance [flags]")
+	fmt.Fprintln(os.Stderr, "usage: gooo-semantic-dialect-migrator migrate|conformance|annotate-metrics|validate-metrics [flags]")
 }

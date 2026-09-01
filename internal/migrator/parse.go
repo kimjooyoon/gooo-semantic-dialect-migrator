@@ -106,7 +106,7 @@ func (m MetaContract) Validate() error {
 	if len(m.Precedence) == 0 || len(m.UnknownFields) == 0 {
 		return errors.New("meta precedence or UNKNOWN tuple is empty")
 	}
-	for _, key := range []string{"repository_writes", "local_test_executions", "cross_project_required_gates", "automatic_commit", "automatic_push", "automatic_merge", "automatic_release"} {
+	for _, key := range []string{"repository_writes", "local_test_executions", "local_build_executions", "local_vet_executions", "local_conformance_executions", "local_integration_executions", "cross_project_required_gates", "automatic_commit", "automatic_push", "automatic_merge", "automatic_release"} {
 		if m.AuthorityPolicy[key] != "0" {
 			return fmt.Errorf("authority policy %s must be zero", key)
 		}
